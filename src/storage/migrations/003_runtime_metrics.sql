@@ -1,0 +1,24 @@
+CREATE TABLE IF NOT EXISTS scanner_runs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  started_at TIMESTAMP(3) NOT NULL,
+  ended_at TIMESTAMP(3) NULL,
+  duration_hours DECIMAL(12, 4) NOT NULL,
+  candidate_count INT UNSIGNED NOT NULL DEFAULT 0,
+  raw_opportunities BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  status ENUM('RUNNING', 'COMPLETED', 'FAILED', 'INTERRUPTED') NOT NULL,
+  created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_scanner_runs_started (started_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS api_metrics (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  provider VARCHAR(32) NOT NULL,
+  endpoint VARCHAR(255) NOT NULL,
+  success BOOLEAN NOT NULL,
+  latency_ms INT UNSIGNED NULL,
+  error_code VARCHAR(64) NULL,
+  created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_api_metrics_provider_created (provider, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

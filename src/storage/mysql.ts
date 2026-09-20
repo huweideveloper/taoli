@@ -39,6 +39,11 @@ export const loadOpportunityMigration = async () => readFile(
   "utf8",
 );
 
+export const loadRuntimeMetricsMigration = async () => readFile(
+  fileURLToPath(new URL("./migrations/003_runtime_metrics.sql", import.meta.url)),
+  "utf8",
+);
+
 export class MySqlDatabase {
   private readonly pool: Pool;
 
@@ -61,6 +66,7 @@ export class MySqlDatabase {
   async runMigrations() {
     await this.pool.query(await loadInitialMigration());
     await this.pool.query(await loadOpportunityMigration());
+    await this.pool.query(await loadRuntimeMetricsMigration());
   }
 
   async execute<T extends QueryResult>(sql: string, values: (string | number | bigint | boolean | Date | null)[] = []): Promise<[T, FieldPacket[]]> {
