@@ -18,6 +18,7 @@ export interface DexQuote {
   effectivePrice: string;
   priceImpact: string | null;
   tokenTax: string;
+  isHoneypot: boolean;
   estimateGasFee: string;
   tradeFee: string;
   route: string;
@@ -47,6 +48,7 @@ const tokenSchema = z.object({
   tokenContractAddress: z.string(),
   tokenSymbol: z.string(),
   taxRate: z.string().nullable().optional(),
+  isHoneyPot: z.boolean().optional(),
 }).passthrough();
 
 const quoteSchema = z.object({
@@ -83,6 +85,7 @@ export const quoteExactIn = async (client: OkxClient, input: QuoteExactInInput):
     effectivePrice,
     priceImpact: quote.priceImpactPercent ?? null,
     tokenTax: (fromTax.gte(toTax) ? fromTax : toTax).toFixed(),
+    isHoneypot: Boolean(quote.fromToken.isHoneyPot || quote.toToken.isHoneyPot),
     estimateGasFee: quote.estimateGasFee,
     tradeFee: quote.tradeFee,
     route: quote.router,

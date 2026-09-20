@@ -1,5 +1,6 @@
 export const riskConfig = {
-  maxPriceImpactPct: 0.01,
-  maxTokenTaxPct: 0.02,
-  minLiquidityUsd: 10_000,
+  maxPriceImpactPercent: "1",
+  maxTokenTaxRate: "0.02",
+  minLiquidityUsd: "10000",
+  requiredQuoteSizesUsd: [1000, 3000] as const,
 } as const;
