@@ -33,6 +33,11 @@ export const loadInitialMigration = async () => readFile(
   "utf8",
 );
 
+export const loadOpportunityMigration = async () => readFile(
+  fileURLToPath(new URL("./migrations/002_opportunities.sql", import.meta.url)),
+  "utf8",
+);
+
 export class MySqlDatabase {
   private readonly pool: Pool;
 
@@ -50,6 +55,11 @@ export class MySqlDatabase {
 
   async runInitialMigration() {
     await this.pool.query(await loadInitialMigration());
+  }
+
+  async runMigrations() {
+    await this.pool.query(await loadInitialMigration());
+    await this.pool.query(await loadOpportunityMigration());
   }
 
   async execute<T extends QueryResult>(sql: string, values: (string | number | bigint | boolean | Date | null)[] = []): Promise<[T, FieldPacket[]]> {
