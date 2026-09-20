@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import mysql, { type FieldPacket, type Pool, type PoolConnection, type QueryResult } from "mysql2/promise";
+import { retry } from "../utils/retry.js";
 
 export interface DatabaseConfig {
   host: string;
@@ -79,6 +80,14 @@ export class MySqlDatabase {
     } finally {
       connection.release();
     }
+  }
+
+  async withTransactionRetry<T>(work: (connection: PoolConnection) => Promise<T>, maxRetries = 2): Promise<T> {
+    return retry(() => this.withTransaction(work), {
+      maxRetries,
+      delayMs: 100,
+      shouldRetry: (error) => ["ER_LOCK_DEADLOCK", "ER_LOCK_WAIT_TIMEOUT", "PROTOCOL_CONNECTION_LOST", "ECONNRESET"].includes((error as { code?: string }).code ?? ""),
+    });
   }
 
   async close() {
