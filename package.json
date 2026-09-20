@@ -8,6 +8,8 @@
     "build": "tsc --noEmit",
     "env:check": "tsx scripts/01-env-check.ts",
     "scanner": "tsx scripts/14-run-scanner.ts",
+    "collect": "tsx scripts/22-collect-duration.ts",
+    "report": "tsx scripts/15-report-72h.ts",
     "paper": "tsx scripts/16-run-paper.ts"
   },
   "engines": {
