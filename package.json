@@ -7,7 +7,8 @@
     "test": "vitest run",
     "build": "tsc --noEmit",
     "env:check": "tsx scripts/01-env-check.ts",
-    "scanner": "tsx scripts/14-run-scanner.ts"
+    "scanner": "tsx scripts/14-run-scanner.ts",
+    "paper": "tsx scripts/16-run-paper.ts"
   },
   "engines": {
     "node": ">=22"
