@@ -17,6 +17,10 @@ export interface ArbitrageCalculation {
   estimatedCostsUsd: Decimal;
   netProfitUsd: Decimal;
   netSpreadPct: Decimal;
+  binanceFeeUsd: Decimal;
+  gasUsd: Decimal;
+  executionBufferUsd: Decimal;
+  rebalanceCostUsd: Decimal;
 }
 
 export const calculateCosts = (input: CostInput): ArbitrageCalculation => {
@@ -40,5 +44,9 @@ export const calculateCosts = (input: CostInput): ArbitrageCalculation => {
     estimatedCostsUsd,
     netProfitUsd,
     netSpreadPct: netProfitUsd.dividedBy(tradeSizeUsd),
+    binanceFeeUsd: binanceFee,
+    gasUsd: decimal(input.gasUsd),
+    executionBufferUsd: decimal(input.executionBufferUsd),
+    rebalanceCostUsd: decimal(input.rebalanceCostUsd),
   };
 };
