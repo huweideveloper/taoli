@@ -25,6 +25,23 @@ export interface DexQuote {
   raw: unknown;
 }
 
+export type QuoteDirection = "USDT_TO_TOKEN" | "TOKEN_TO_USDT";
+
+export interface TwoWayQuoteInput {
+  chainIndex: string;
+  tokenPriceUsd: string;
+  fromTokenDecimals: number;
+  tokenDecimals: number;
+  usdtAddress: string;
+  tokenAddress: string;
+  sizesUsd: readonly number[];
+}
+
+export interface TwoWayQuote extends DexQuote {
+  sizeUsd: number;
+  direction: QuoteDirection;
+}
+
 const tokenSchema = z.object({
   decimal: z.string(),
   tokenContractAddress: z.string(),
@@ -72,4 +89,32 @@ export const quoteExactIn = async (client: OkxClient, input: QuoteExactInInput):
     quoteLatencyMs: Date.now() - startedAt,
     raw: quote,
   };
+};
+
+export const quoteBothDirections = async (client: OkxClient, input: TwoWayQuoteInput): Promise<TwoWayQuote[]> => {
+  const results: TwoWayQuote[] = [];
+  for (const sizeUsd of input.sizesUsd) {
+    const buy = await quoteExactIn(client, {
+      chainIndex: input.chainIndex,
+      amount: String(sizeUsd),
+      fromTokenDecimals: input.fromTokenDecimals,
+      toTokenDecimals: input.tokenDecimals,
+      fromTokenAddress: input.usdtAddress,
+      toTokenAddress: input.tokenAddress,
+    });
+    results.push({ ...buy, sizeUsd, direction: "USDT_TO_TOKEN" });
+
+    const tokenAmount = decimal(sizeUsd).dividedBy(input.tokenPriceUsd);
+    if (tokenAmount.decimalPlaces() > input.tokenDecimals) throw new Error("token reference amount exceeds token decimals");
+    const sell = await quoteExactIn(client, {
+      chainIndex: input.chainIndex,
+      amount: tokenAmount.toFixed(),
+      fromTokenDecimals: input.tokenDecimals,
+      toTokenDecimals: input.fromTokenDecimals,
+      fromTokenAddress: input.tokenAddress,
+      toTokenAddress: input.usdtAddress,
+    });
+    results.push({ ...sell, sizeUsd, direction: "TOKEN_TO_USDT" });
+  }
+  return results;
 };
