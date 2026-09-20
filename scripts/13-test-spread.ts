@@ -1,0 +1,24 @@
+import "dotenv/config";
+import { chains } from "../config/chains.js";
+import { BinanceClient } from "../src/binance/client.js";
+import { quoteExactIn } from "../src/okx/quote.js";
+import { OkxClient } from "../src/okx/client.js";
+import { searchTokenCandidates } from "../src/okx/token-search.js";
+import { calculateBuyVwap, calculateSellVwap } from "../src/market/vwap.js";
+import { calculateSpread } from "../src/scanner/spread.js";
+
+const symbol = process.argv[2] ?? "CAKE";
+const size = process.argv[3] ?? "1000";
+const okx = new OkxClient();
+const token = (await searchTokenCandidates(okx, symbol)).find(({ communityRecognized }) => communityRecognized);
+if (!token) throw new Error(`No recognized BSC token candidate found for ${symbol}`);
+const dexBuy = await quoteExactIn(okx, { chainIndex: "56", amount: size, fromTokenDecimals: chains.bsc.usdtDecimals, toTokenDecimals: Number(token.decimal), fromTokenAddress: chains.bsc.usdtAddress, toTokenAddress: token.tokenContractAddress });
+const depth = await new BinanceClient().getDepth(`${token.tokenSymbol}USDT`);
+const bids = depth.bids.map(([price, quantity]) => ({ price, quantity }));
+const asks = depth.asks.map(([price, quantity]) => ({ price, quantity }));
+const directionA = calculateSpread({ direction: "DEX_BUY_BINANCE_SELL", tradeSizeUsd: size, dex: dexBuy, binance: calculateSellVwap(bids, { baseQuantity: dexBuy.outputAmount }) });
+const binanceBuy = calculateBuyVwap(asks, { quoteNotional: size });
+const dexSell = await quoteExactIn(okx, { chainIndex: "56", amount: binanceBuy.filledQuantity, fromTokenDecimals: Number(token.decimal), toTokenDecimals: chains.bsc.usdtDecimals, fromTokenAddress: token.tokenContractAddress, toTokenAddress: chains.bsc.usdtAddress });
+const directionB = calculateSpread({ direction: "BINANCE_BUY_DEX_SELL", tradeSizeUsd: size, dex: dexSell, binance: binanceBuy });
+console.log(`Symbol: ${token.tokenSymbol}USDT\nChain: BSC\nSize: $${size}`);
+for (const [label, result] of [["DEX BUY → BINANCE SELL", directionA], ["BINANCE BUY → DEX SELL", directionB]] as const) console.log(`\n${label}\nInput: ${result.inputUsd}\nOutput: ${result.outputUsd}\nGross profit: ${result.grossProfitUsd}\nGross spread: ${result.grossSpreadPct}`);
