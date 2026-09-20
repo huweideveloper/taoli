@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance } from "axios";
 import { logger } from "../utils/logger.js";
 import { parseExchangeInfo } from "./exchange-info.js";
-import type { BinanceExchangeInfo } from "./types.js";
+import type { BinanceDepth, BinanceExchangeInfo } from "./types.js";
 
 export interface BinanceClientOptions {
   baseUrl?: string;
@@ -38,10 +38,14 @@ export class BinanceClient {
     return parseExchangeInfo(payload);
   }
 
-  private async get<T>(path: string): Promise<T> {
+  async getDepth(symbol: string, limit = 100): Promise<BinanceDepth> {
+    return this.get<BinanceDepth>("/api/v3/depth", { symbol, limit });
+  }
+
+  private async get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
     for (let attempt = 0; ; attempt += 1) {
       try {
-        const response = await this.http.get<T>(path);
+        const response = await this.http.get<T>(path, { params });
         return response.data;
       } catch (error) {
         const status = axios.isAxiosError(error) ? error.response?.status : undefined;

@@ -12,3 +12,9 @@ export interface BinanceExchangeInfo {
   serverTime: number;
   symbols: BinanceSymbolInfo[];
 }
+
+export interface BinanceDepth {
+  lastUpdateId: number;
+  bids: [string, string][];
+  asks: [string, string][];
+}
